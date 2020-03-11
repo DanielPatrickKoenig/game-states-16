@@ -8,7 +8,11 @@
       </label>
     </div>
     <div class="charts">
-      <barChart :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales"></barChart>
+      <!-- <barChart :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales"></barChart> -->
+      <div class="mobile-bar-chart-container">
+        <!-- <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales" :style="'width:' + (1200 * compCount) + 'px;max-width:' + (1200 * compCount) + 'px;min-width:' + (1200 * compCount) + 'px;margin-left:-' + (9 * compCount).toString() + '%;'"></barChart> -->
+        <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales" :style="'width:' + compCount + '00%;max-width:' + compCount + '00%;min-width:' + compCount + '00%;'"></barChart>
+      </div>
       <div class="rating-charts">
         <!-- <label class="ratings-title" v-text="Object.keys(ratings).length === 0 ? '' : 'Critic Ratings'"></label> -->
         <div slot="userinterface">
@@ -102,8 +106,11 @@ export default {
       yeardata: {},
       comparisondata: {},
       ratings: {},
+      updating: false,
+      compCount: 1,
       starsPath: 'M 11.037 0 l 3.411 6.911 l 7.625 1.108 l -5.518 5.379 l 1.303 7.594 l -6.821 -3.585 l -6.821 3.585 l 1.303 -7.594 L 0 8.019 l 7.626 -1.108 L 11.037 0 Z M 32.088 6.911 l -7.625 1.108 l 5.518 5.379 l -1.302 7.594 l 6.82 -3.585 l 6.821 3.585 l -1.303 -7.594 l 5.518 -5.379 l -7.626 -1.108 L 35.498 0 L 32.088 6.911 Z M 56.55 6.911 l -7.626 1.108 l 5.519 5.379 l -1.303 7.594 l 6.821 -3.585 l 6.82 3.585 l -1.302 -7.594 l 5.518 -5.379 l -7.626 -1.108 L 59.96 0 L 56.55 6.911 Z M 81.012 6.911 l -7.627 1.108 l 5.52 5.379 l -1.304 7.594 l 6.821 -3.585 l 6.82 3.585 l -1.303 -7.594 l 5.518 -5.379 l -7.625 -1.108 L 84.423 0 L 81.012 6.911 Z M 105.474 6.911 l -7.627 1.108 l 5.519 5.379 l -1.302 7.594 l 6.82 -3.585 l 6.821 3.585 l -1.304 -7.594 l 5.52 -5.379 l -7.626 -1.108 L 108.884 0 L 105.474 6.911 Z',
       shouldShowShortcuts: false,
+      currentWidth: 0,
       shortcuts: {
         NONE: {
           label: 'Everything',
@@ -149,6 +156,8 @@ export default {
       onUpdateSim: function (d) {
         var splitter = ':::'
         var _params = {}
+        d.updating = true
+        d.compCount = 0
         for (var i = 0; i < d.selectedTags.length; i++) {
           if (_params[d.selectedTags[i].type] === undefined) {
             _params[d.selectedTags[i].type] = []
@@ -160,13 +169,17 @@ export default {
           params[p] = _params[p].join(splitter)
         }
         console.log(params)
-        axios.get('/gamerstats1/default/update', {params: params}).then(response => {
+        axios.get('/' + document.querySelector('#applicationnamediv').innerHTML + '/default/update', {params: params}).then(response => {
           var dta = response.data
+          d.compCount = Object.keys(dta.subset).length
           d.salesdata = dta.sales
           d.yeardata = dta.years
           d.comparisondata = dta.subset
           d.ratings = dta.ratings
           console.log(d.ratings)
+          setTimeout(function () {
+            d.updating = false
+          }, 10)
         })
       }
     }
@@ -202,6 +215,7 @@ export default {
   },
   created () {
     var self = this
+    self.$data.currentWidth = window.innerWidth
     EventBus.$on('check-all-option-checked', (n) => {
       self.$data.searchableContentFiltered = {}
       for (var s in self.$data.searchableContent) {
@@ -225,7 +239,7 @@ export default {
       self.$data.onUpdateSim(self.$data)
     })
 
-    axios.get('/gamerstats1/default/data').then(response => {
+    axios.get('/' + document.querySelector('#applicationnamediv').innerHTML + '/default/data').then(response => {
       var dta = response.data
       var game = dta.namelist
       var genre = dta.genrelist
@@ -236,6 +250,12 @@ export default {
       self.$data.initailLoading = false
       self.$data.showInfo = true
       self.$data.onUpdateSim(self.$data)
+      window.addEventListener('resize', function () {
+        if (self.$data.currentWidth !== window.innerWidth) {
+          self.$data.onUpdateSim(self.$data)
+        }
+        self.$data.currentWidth = window.innerWidth
+      })
     })
   }
 }
@@ -648,18 +668,7 @@ svg.rating-art{
     stroke: transparent;
   }
 }
-li.genre{ 
-  background-image: url("/gamerstats1/static/vue/src/assets/genre.svg");
-}
-li.system{
-  background-image: url("/gamerstats1/static/vue/src/assets/system.svg");
-}
-li.publisher{
-  background-image: url("/gamerstats1/static/vue/src/assets/publisher.svg");
-}
-li.game{
-  background-image: url("/gamerstats1/static/vue/src/assets/game.svg");
-}
+
 label.favorites-icon{
   color: #0afff1;
   display: inline-block;
@@ -723,16 +732,7 @@ ul.shortcuts-list{
   }
 }
 
-@font-face {
-  font-family: "gameing-simulator";  
-  src:  url("/gamerstats1/static/src/vue/assets/fonts/gameing-simulator.eot?qhfh8m");  
-  src:  url("/gamerstats1/static/src/vue/assets/fonts/gameing-simulator.eot?qhfh8m#iefix") format("embedded-opentype"),
-  url("/gamerstats1/static/src/vue/assets/fonts/gameing-simulator.ttf?qhfh8m") format("truetype"),
-  url("/gamerstats1/static/src/vue/assets/fonts/gameing-simulator.woff?qhfh8m") format("woff"),
-  url("/gamerstats1/static/src/vue/assets/fonts/gameing-simulator.svg?qhfh8m#gameing-simulator") format("svg");
-  font-weight: normal;
-  font-style: normal;
-}
+
 [class^="gaming-sim"], 
 [class*=" gaming-sim"] {  
   /* use !important to prevent issues with browser extensions that change fonts */  
@@ -801,5 +801,38 @@ div#loading_container{
   background-repeat:no-repeat;
   background-position: center;
   opacity: .5;
+}
+
+
+.mobile-bar-chart-container{
+  width: 1200px;
+  max-width: 100%;
+  overflow-x:auto;
+  overflow-y:hidden;
+  margin:0 auto;
+  > .bar-chart{
+    width: 100%;
+    display:block !important;
+    float: left;
+    > div{
+      width:100% !important;
+      div{
+        width:100% !important;
+        > canvas{
+          width:100% !important;
+        }
+      }
+    }
+  }
+}
+
+@media screen and (min-width: 1200px) {
+  .mobile-bar-chart-container{
+    > .bar-chart{
+      width: 100% !important;
+      min-width: 100% !important;
+      max-width: 100% !important;
+    }
+  }
 }
 </style>

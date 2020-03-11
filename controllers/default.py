@@ -26,7 +26,7 @@ def load_data():
     import os
     import ujson
     wd = os.getcwd()
-    privateDir = wd + '/applications/gamerstats1/private/'
+    privateDir = wd + '/applications/' + request.application + '/private/'
     df = pd.read_csv(privateDir+'data/dataset_1/Video_Games_Sales_as_at_22_Dec_2016.csv')
     #print df
     #genres = df.transpose().groupby('Global_Sales')[['Action','Adventure','Fighting','Misc','Platform','Puzzle','Racing','Role-Playing','Shooter','Simulation','Sports','Strategy']].sum()
@@ -63,7 +63,7 @@ def update_data(req):
     import ujson
 
     wd = os.getcwd()
-    privateDir = wd + '/applications/gamerstats1/private/'
+    privateDir = wd + '/applications/' + request.application + '/private/'
     df = pd.read_csv(privateDir+'data/dataset_1/Video_Games_Sales_as_at_22_Dec_2016.csv')
 
     # genre = existsOrEmptyList(req.args.get('genre'),req.args.get('splitter'))
