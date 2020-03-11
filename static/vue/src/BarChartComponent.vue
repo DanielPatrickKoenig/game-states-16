@@ -13,8 +13,8 @@
       }
     },
     props: ['chartdata', 'colors', 'textcolor', 'title'],
-    watch: {
-      chartdata: function () {
+    methods: {
+      setChartData: function () {
         var self = this
         if (document.getElementById(self.$data.chartid) !== undefined) {
           var _legendData = []
@@ -86,6 +86,7 @@
     mounted: function () {
       var self = this
       self.$data.chartObject = echarts.init(document.getElementById(self.$data.chartid))
+      self.setChartData()
     }
   }
 </script>
