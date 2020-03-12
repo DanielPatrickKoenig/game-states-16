@@ -1,5 +1,6 @@
 <template>
   <ul class="tag-list">
+    <li><slot name="header"></slot></li>
     <li v-for="(s,i) in tags" :key="i" v-bind:class="s.type">
       <span v-text="s.text"></span>
       <span v-bind:tag-index="i" v-on:click="onDeleteClicked"></span>

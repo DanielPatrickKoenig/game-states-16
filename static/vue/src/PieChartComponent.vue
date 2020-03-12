@@ -1,5 +1,6 @@
 <template>
   <div class="pie-chart">
+    <slot name="header"></slot>
     <div v-bind:id="chartid"></div>
   </div>
 </template>
