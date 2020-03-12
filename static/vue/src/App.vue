@@ -9,10 +9,16 @@
     </div>
     <div class="charts">
       <!-- <barChart :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales"></barChart> -->
+      <h2>Regional Sales</h2>
       <div class="mobile-bar-chart-container">
         <!-- <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales" :style="'width:' + (1200 * compCount) + 'px;max-width:' + (1200 * compCount) + 'px;min-width:' + (1200 * compCount) + 'px;margin-left:-' + (9 * compCount).toString() + '%;'"></barChart> -->
-        <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales" :style="'width:' + compCount + '00%;max-width:' + compCount + '00%;min-width:' + compCount + '00%;'"></barChart>
+        <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="" :style="'width:' + compCount + '00%;max-width:' + compCount + '00%;min-width:' + compCount + '00%;'"></barChart>
       </div>
+      <dpkcarousel v-if="Object.keys(comparisondata).length > 1" :items="Object.keys(comparisondata)" :contentwidth="50" v-on:carousel-shift="onBarShift">
+        <div v-for="(c, i) in Object.keys(comparisondata)" :key="'object-item-' + i.toString()" :slot="'item-' + i.toString()" style="display:none;">
+          {{c}}
+        </div>
+      </dpkcarousel>
       <div class="rating-charts">
         <!-- <label class="ratings-title" v-text="Object.keys(ratings).length === 0 ? '' : 'Critic Ratings'"></label> -->
         <div slot="userinterface">
@@ -21,6 +27,7 @@
           </checkAll>
           </searchText>
           <tagList v-if="selectedTags.length > 0" :tags="selectedTags">
+            <h2 slot="header">Ratings</h2>
             <svg class="rating-art" v-for="(s, i) in selectedTags" :key="'tag_'+i.toString()" :slot="'content_'+i.toString()">
               <defs>
                 <clipPath :id="'mask_'+i.toString()">
@@ -31,9 +38,9 @@
               <rect :clip-path="'url(#mask_'+i.toString()+')'" xmlns="http://www.w3.org/2000/svg" x="0" y="0" :width="120*(ratings[s.text].Critic_Score/100)" height="24"></rect>
             </svg>
           </tagList>
-          <label v-if="showSearch" :class="shouldShowShortcuts ? 'favorites-icon open' : 'favorites-icon'" for="tag_favorites"></label>
+          <label :class="shouldShowShortcuts ? 'favorites-icon open' : 'favorites-icon'" for="tag_favorites"></label>
           <input type="checkbox" v-model="shouldShowShortcuts" id="tag_favorites" style="display:none;" />
-          <ul v-if="shouldShowShortcuts && showSearch" class="shortcuts-list">
+          <ul v-if="shouldShowShortcuts" class="shortcuts-list">
             <li v-for="(s, k, i) in shortcuts" :key="'shortcut_'+i.toString()" v-on:click="doShortCut" :shortcut="k">
               <a>{{s.label}}</a>
             </li>
@@ -41,7 +48,9 @@
         </div>
         <!-- <ratingChart v-for="(r, k, i) in ratings" :key="i" v-bind:chartdata="r.Critic_Score !== undefined ? r.Critic_Score : 0" v-bind:color="chartColors[0]" v-bind:text="k" v-bind:total="100"></ratingChart> -->
       </div>
-      <pieChart v-if="!updating" :chartdata="salesdata" :colors="chartColors" :textcolor="chartTextColor" title=" Sales by Genre" hovertitle='Global Sales'></pieChart>
+      <pieChart v-if="!updating" :chartdata="salesdata" :colors="chartColors" :textcolor="chartTextColor" title="" hovertitle='Global Sales'>
+        <h2 slot="header">Sales by Genre</h2>
+      </pieChart>
     </div>
     <div v-if="showInfo" id="information_container" v-on:click="showInfo = false;">
       <div>
@@ -73,6 +82,7 @@
 
 <script>
 import {EventBus} from './EventBus.js'
+import {TweenLite} from 'gsap'
 import PiehartComponent from './PieChartComponent.vue'
 import BarhartComponent from './BarChartComponent.vue'
 import RatingChartComponent from './RatingChartComponent.vue'
@@ -80,6 +90,7 @@ import uiDrawerComponent from './UIDrawerComponent.vue'
 import CheckAllComponent from './CheckAllComponent.vue'
 import SearchTextComponent from './SearchTextComponent.vue'
 import TagListComponent from './TagListComponent.vue'
+import DPKCarousel from './DPKCarousel.vue'
 import axios from 'axios'
 export default {
   name: 'app',
@@ -90,7 +101,8 @@ export default {
     uiDrawer: uiDrawerComponent,
     checkAll: CheckAllComponent,
     searchText: SearchTextComponent,
-    tagList: TagListComponent
+    tagList: TagListComponent,
+    dpkcarousel: DPKCarousel
   },
   data () {
     return {
@@ -162,7 +174,7 @@ export default {
           tags: [{type: 'game', text: 'Tetris'}, {type: 'genre', text: 'Puzzle'}]
         }
       },
-      onUpdateSim: function (d) {
+      onUpdateSim: function (d, s) {
         var splitter = ':::'
         var _params = {}
         d.updating = true
@@ -188,12 +200,35 @@ export default {
           console.log(d.ratings)
           setTimeout(function () {
             d.updating = false
+            setTimeout(function () {
+              if (Object.keys(d.comparisondata).length > 1) {
+                s.shiftBarChart(0)
+              }
+            }, 100)
           }, 10)
         })
       }
     }
   },
   methods: {
+    onBarShift: function (e) {
+      let self = this
+      self.shiftBarChart(e.position)
+    },
+    shiftBarChart: function (pos) {
+      let self = this
+      let wide = document.querySelector('.mobile-bar-chart-container > div').getBoundingClientRect().width
+      let newPos = ((((wide * 0.8) / Object.keys(self.$data.comparisondata).length) * pos) + (wide * 0.075)) * -1
+      let startPos = document.querySelector('.mobile-bar-chart-container > div').style.marginLeft !== undefined ? Number(document.querySelector('.mobile-bar-chart-container > div').style.marginLeft.split('px')[0]) : 0
+      let tracker = {x: startPos}
+      TweenLite.to(tracker, 0.5, {
+        x: newPos,
+        onUpdate: function (t) {
+          document.querySelector('.mobile-bar-chart-container > div').style.marginLeft = t.x.toString() + 'px'
+        },
+        onUpdateParams: [tracker]
+      })
+    },
     getExcludeList: function (el) {
       var outList = []
       for (var i = 0; i < el.length; i++) {
@@ -212,7 +247,7 @@ export default {
             self.addTag(self.$data.shortcuts[s].tags[i])
           }
           // self.$data.selectedTags = self.$data.shortcuts[s].tags
-          self.$data.onUpdateSim(self.$data)
+          self.$data.onUpdateSim(self.$data, self)
         }
       }
       self.$data.shouldShowShortcuts = false
@@ -241,11 +276,11 @@ export default {
     })
     EventBus.$on('search-term-clicked', (n) => {
       self.addTag({type: n.getAttribute('class'), text: n.innerHTML})
-      self.$data.onUpdateSim(self.$data)
+      self.$data.onUpdateSim(self.$data, self)
     })
     EventBus.$on('tag-deleted-clicked', (n) => {
       self.$data.selectedTags.splice(Number(n.getAttribute('tag-index')), 1)
-      self.$data.onUpdateSim(self.$data)
+      self.$data.onUpdateSim(self.$data, self)
     })
 
     axios.get('/' + document.querySelector('#applicationnamediv').innerHTML + '/default/data').then(response => {
@@ -258,10 +293,10 @@ export default {
       self.$data.searchableContentFiltered = {genre: genre, system: system, publisher: publisher, game: game}
       self.$data.initailLoading = false
       self.$data.showInfo = true
-      self.$data.onUpdateSim(self.$data)
+      self.$data.onUpdateSim(self.$data, self)
       window.addEventListener('resize', function () {
         if (self.$data.currentWidth !== window.innerWidth) {
-          self.$data.onUpdateSim(self.$data)
+          self.$data.onUpdateSim(self.$data, self)
         }
         self.$data.currentWidth = window.innerWidth
       })
@@ -603,7 +638,7 @@ ul.tag-list{
   overflow-y: auto;
   top: 33px;
   box-shadow: -1px 0 0 rgba(10,241,255,.3);
-  top:270px;
+  top:392px;
 }
 
 div.rating-charts{
@@ -851,7 +886,7 @@ div#loading_container{
 .mobile-bar-chart-container{
   width: 1200px;
   max-width: 100%;
-  overflow-x:auto;
+  overflow-x:hidden;
   overflow-y:hidden;
   margin:0 auto;
   > .bar-chart{
@@ -899,12 +934,16 @@ nav.mobile-nav-bar{
 .mobile-hide{
   display:none;
 }
+h2{
+  color:#ffffff;
+}
 @media screen and (min-width: 1200px) {
   .mobile-bar-chart-container{
     > .bar-chart{
       width: 100% !important;
       min-width: 100% !important;
       max-width: 100% !important;
+      margin-left: 0 !important;
     }
   }
   ul.tag-list{
@@ -958,7 +997,7 @@ nav.mobile-nav-bar{
   }
   ul.tag-list{
     min-height: 340px;
-    top:0;
+    top:33px;
   }
   div.rating-charts{
     height:374px;
