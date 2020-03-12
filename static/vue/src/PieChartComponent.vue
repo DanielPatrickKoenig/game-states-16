@@ -14,8 +14,8 @@
       }
     },
     props: ['chartdata', 'colors', 'textcolor', 'title', 'hovertitle'],
-    watch: {
-      chartdata: function () {
+    methods: {
+      setChartdata: function () {
         var self = this
         if (document.getElementById(self.$data.chartid) !== undefined) {
           var _data = []
@@ -83,6 +83,7 @@
     mounted: function () {
       var self = this
       self.$data.chartObject = echarts.init(document.getElementById(self.$data.chartid))
+      self.setChartdata()
     }
   }
 </script>
