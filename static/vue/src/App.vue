@@ -2,7 +2,7 @@
   <div id="app">
     <div class='main-header'  v-on:click="showInfo = true;">
       <label>
-        Video Game Sales
+        {{appName}}
         <!-- <ul><li class="gaming-simabout">About</li><li class="gaming-simoptions">Options</li><li class="gaming-simhelp">Help</li></ul> -->
         <a></a>
       </label>
@@ -16,7 +16,7 @@
       <div class="rating-charts">
         <!-- <label class="ratings-title" v-text="Object.keys(ratings).length === 0 ? '' : 'Critic Ratings'"></label> -->
         <div slot="userinterface">
-          <searchText :choices="checkChoices" :list="searchableContentFiltered" :exclusions="getExcludeList(selectedTags)" searchprompt="Search by game, system, producer or genre">
+          <searchText :class="showSearch ? '' : 'mobile-hide'" :choices="checkChoices" :list="searchableContentFiltered" :exclusions="getExcludeList(selectedTags)" searchprompt="Search by game, system, producer or genre">
             <checkAll :choices="checkChoices" slot="filters">
           </checkAll>
           </searchText>
@@ -31,9 +31,9 @@
               <rect :clip-path="'url(#mask_'+i.toString()+')'" xmlns="http://www.w3.org/2000/svg" x="0" y="0" :width="120*(ratings[s.text].Critic_Score/100)" height="24"></rect>
             </svg>
           </tagList>
-          <label :class="shouldShowShortcuts ? 'favorites-icon open' : 'favorites-icon'" for="tag_favorites"></label>
-          <input type="checkbox" v-model="shouldShowShortcuts" id="tag_favorites" />
-          <ul v-if="shouldShowShortcuts" class="shortcuts-list">
+          <label v-if="showSearch" :class="shouldShowShortcuts ? 'favorites-icon open' : 'favorites-icon'" for="tag_favorites"></label>
+          <input type="checkbox" v-model="shouldShowShortcuts" id="tag_favorites" style="display:none;" />
+          <ul v-if="shouldShowShortcuts && showSearch" class="shortcuts-list">
             <li v-for="(s, k, i) in shortcuts" :key="'shortcut_'+i.toString()" v-on:click="doShortCut" :shortcut="k">
               <a>{{s.label}}</a>
             </li>
@@ -41,7 +41,7 @@
         </div>
         <!-- <ratingChart v-for="(r, k, i) in ratings" :key="i" v-bind:chartdata="r.Critic_Score !== undefined ? r.Critic_Score : 0" v-bind:color="chartColors[0]" v-bind:text="k" v-bind:total="100"></ratingChart> -->
       </div>
-      <pieChart :chartdata="salesdata" :colors="chartColors" :textcolor="chartTextColor" title=" Sales by Genre" hovertitle='Global Sales'></pieChart>
+      <pieChart v-if="!updating" :chartdata="salesdata" :colors="chartColors" :textcolor="chartTextColor" title=" Sales by Genre" hovertitle='Global Sales'></pieChart>
     </div>
     <div v-if="showInfo" id="information_container" v-on:click="showInfo = false;">
       <div>
@@ -50,6 +50,13 @@
         <p>This data simulator allows you to visualize sales performance of all video games sold as of 2016. Using the search-tool you can filter down to specific games, systems, publishers or genres. You can compare any number of selections side by side, across all categories.</p>
       </div>
     </div>
+    <nav class="mobile-nav-bar">
+      <span>{{appName}}</span>
+    </nav>
+    <button class="glyphicon glyphicon-search mobile-search-button" v-on:click="showSearch = !showSearch">
+
+    </button>
+    <a class="mobile-info-icon" v-on:click="showInfo = true;"></a>
     <div v-if="initailLoading" id="loading_container" v-on:click="showInfo = false;">
       LOADING
     </div>
@@ -96,11 +103,13 @@ export default {
         {text: 'Publishers', value: 'publisher', selected: true, cssClass: 'gaming-simpublisher'},
         {text: 'Games', value: 'game', selected: true, cssClass: 'gaming-simgame'}
       ],
+      appName: 'Video Game Sales',
       showInfo: false,
       initailLoading: true,
       searchableContent: {},
       searchableContentFiltered: {},
       searchExclusions: [],
+      showSearch: false,
       selectedTags: [],
       salesdata: {},
       yeardata: {},
@@ -301,14 +310,18 @@ ul.tag-list{
 div.search-text{
   max-width:780px;
   width:100%;
-  position:relative;
+  position:fixed;
   margin:0 10px;
   z-index:20;
   clear:left;
+  top: 14px;
   margin-top:-5px;
+  background-color:rgba(0,0,0,.85);
+  
+  
   > input[type='text']{
     display:block;
-    width:92%;
+    width:60%;
     max-width:770px;
     height:30px;
     font-size:12px;
@@ -320,14 +333,19 @@ div.search-text{
     background-color: rgba(0,0,0,.5);
     color: #0afff1;
     outline: none;
+    position: absolute;
+    left: 31px;
+    right: 38px;
+    background-color:#000000;
   }
   > ul:not(.check-all){
     position:absolute;
     max-height:300px;
     overflow:auto;
-    width:60%;
+    width:100%;
     margin:0;
     padding:0;
+    background-color:rgba(0,0,0,.85);
     > li{
       color:$textColor;
       padding:4px;
@@ -344,6 +362,9 @@ div.search-text{
 div.search-text > ul > li,
 ul.check-all > li{
   display:block;
+}
+ul.check-all{
+  margin-top:40px !important;
 }
 
 ul.tag-list{
@@ -367,6 +388,7 @@ ul.tag-list{
       padding-top: 1px;
       display: inline-block;
       max-width: 170px;
+      min-width: 50%;
     }
 
     > span:not(:first-child){
@@ -442,9 +464,18 @@ div.bar-chart{
   display:inline;
   float: right;
 }
-div.pie-chart > div{
+div.pie-chart{
   width:500px;
-  height:400px;
+  height: 250px;
+  max-width:100%;
+  > div{
+    width:100% !important;
+    height:100% !important;
+    > canvas{
+      width:100% !important;
+      height:100% !important;
+    }
+  }
 }
 
 div.line-chart > div,
@@ -566,22 +597,22 @@ ul.check-all{
 ul.tag-list{
   max-height: 340px;
   position: absolute;
-  width: 245px;
+  width: 100%;
   z-index: 100;
   right: 0;
   overflow-y: auto;
   top: 33px;
-  min-height: 340px;
-  box-shadow: -1px 0 0 rgba(10,241,255,.3)
+  box-shadow: -1px 0 0 rgba(10,241,255,.3);
+  top:270px;
 }
 
 div.rating-charts{
   width:700px;
+  max-width:100%;
   display: inline-block;
   text-align: left;
   margin-top:12px;
   position: relative;
-  height:374px;
   box-shadow: 1px 0 0 rgba(10,241,255,.3);
   > div.rating-chart{
     margin: 6px 0;
@@ -605,8 +636,21 @@ label.ratings-title{
   font-size:18px;
   font-weight:bold;
 }
-
+a.mobile-info-icon{
+  position: fixed;
+  font-size: 22px;
+  top: 5px;
+  right: 5px;
+  color: #0afff1;
+  display: inline-block;
+  width: 40px;
+  text-align: center;
+}
+a.mobile-info-icon::before{
+  content:"\2139";
+}
 div.main-header{
+  visibility: hidden;
   width:100%;
   text-align:center;
   font-size:22px;
@@ -675,15 +719,15 @@ label.favorites-icon{
   float: right;
   font-size: 17px;
   text-align: center;
-  position: absolute;
-  right: 10px;
-  top: -2px;
   width: 24px;
   height: 24px;
   border-radius: 50px;
   box-shadow: 0 0 0 1px #0afff1;
   cursor: pointer;
   z-index: 101;
+  top: 10px;
+  right: 50px;
+  position: fixed;
 }
 label.favorites-icon.open{
   color:#000000;
@@ -699,9 +743,9 @@ label.favorites-icon + input[type='checkbox']{
 }
 
 ul.shortcuts-list{
-  position: absolute;
+  position: fixed;
   right: 0;
-  top: 26px;
+  top: 40px;
   width: 200px;
   display: block;
   z-index: 102;
@@ -825,7 +869,36 @@ div#loading_container{
     }
   }
 }
+nav.mobile-nav-bar{
+  position:fixed;
+  text-align: center;
+  top:0;
+  left:0;
+  right:0;
+  height: 42px;
+  background-color:rgba(30,30,30,.85);
+  font-size: 12px;
+  font-weight: bold;
+  color:#999999;
+  + button.mobile-search-button{
+    position: fixed;
+    left: 5px;
+    top: 5px;
+    padding: 5px;
+    font-size: 24px;
+    color: #0afff1;
+    background-color: transparent;
+    z-index: 21;
+  }
+  > span{
+    display:block;
+    padding-top:16px;
+  }
+}
 
+.mobile-hide{
+  display:none;
+}
 @media screen and (min-width: 1200px) {
   .mobile-bar-chart-container{
     > .bar-chart{
@@ -833,6 +906,62 @@ div#loading_container{
       min-width: 100% !important;
       max-width: 100% !important;
     }
+  }
+  ul.tag-list{
+    width: 245px;
+  }
+  div.pie-chart{
+    height: 400px;
+  }
+  div.search-text{
+    position: relative;
+    top: auto;
+    background-color: transparent;
+    > ul:not(.check-all){
+      background-color: transparent;
+      width: 60%;
+    }
+    > input[type="text"]{
+      position: relative;
+      left: auto;
+      right: auto;
+      width:92%;
+      
+    }
+  }
+  nav.mobile-nav-bar{
+    display:none;
+    + button.mobile-search-button{
+      display:none;
+    }
+  }
+  .mobile-hide{
+    display:block;
+  }
+  ul.check-all{
+    margin-top:0 !important;
+  }
+  label.favorites-icon{
+    position: absolute;
+    right: 10px;
+    top: -2px;
+  }
+  ul.shortcuts-list{
+    position:absolute;
+    top:26px;
+  }
+  a.mobile-info-icon{
+    display:none;
+  }
+  div.main-header{
+    visibility:visible;
+  }
+  ul.tag-list{
+    min-height: 340px;
+    top:0;
+  }
+  div.rating-charts{
+    height:374px;
   }
 }
 </style>
