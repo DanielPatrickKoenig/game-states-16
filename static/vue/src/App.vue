@@ -10,11 +10,15 @@
     <div class="charts">
       <!-- <barChart :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales"></barChart> -->
       <h2>Regional Sales</h2>
-      <div class="mobile-bar-chart-container">
+      <chartlegend v-if="Object.keys(comparisondata).length >= 0" :colors="chartColors" :labels="Object.keys(comparisondata[Object.keys(comparisondata)[0]])" :horizontal="true"></chartlegend>
+      <div class="mobile-bar-chart-container mobile-sliding-chart-container">
         <!-- <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales" :style="'width:' + (1200 * compCount) + 'px;max-width:' + (1200 * compCount) + 'px;min-width:' + (1200 * compCount) + 'px;margin-left:-' + (9 * compCount).toString() + '%;'"></barChart> -->
         <barChart v-if="!updating" :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="" :style="'width:' + compCount + '00%;max-width:' + compCount + '00%;min-width:' + compCount + '00%;'"></barChart>
       </div>
-      <dpkcarousel v-if="Object.keys(comparisondata).length > 1" :items="Object.keys(comparisondata)" :contentwidth="50" v-on:carousel-shift="onBarShift">
+      <div v-if="Object.keys(comparisondata).length > 1 && carouselPosition > 0" class="mobile-bar-chart-container measurement-chart-container">
+        <barChart v-if="!updating" :chartdata="highestComparison" :colors="chartColors" :textcolor="chartTextColor" title="" :style="'width:' + compCount + '00%;max-width:' + compCount + '00%;min-width:' + compCount + '00%;'"></barChart>
+      </div>
+      <dpkcarousel v-if="Object.keys(comparisondata).length > 1" class="mobile-show" :items="Object.keys(comparisondata)" :contentwidth="50" :index="carouselPosition" v-on:carousel-shift="onBarShift">
         <div v-for="(c, i) in Object.keys(comparisondata)" :key="'object-item-' + i.toString()" :slot="'item-' + i.toString()" style="display:none;">
           {{c}}
         </div>
@@ -62,7 +66,7 @@
     <nav class="mobile-nav-bar">
       <span>{{appName}}</span>
     </nav>
-    <button class="glyphicon glyphicon-search mobile-search-button" v-on:click="showSearch = !showSearch">
+    <button :class="!showSearch ? 'glyphicon glyphicon-search mobile-search-button' : 'glyphicon glyphicon-search mobile-search-button mobile-search-button-showing-search-ui'" v-on:click="showSearch = !showSearch">
 
     </button>
     <a class="mobile-info-icon" v-on:click="showInfo = true;"></a>
@@ -91,6 +95,7 @@ import CheckAllComponent from './CheckAllComponent.vue'
 import SearchTextComponent from './SearchTextComponent.vue'
 import TagListComponent from './TagListComponent.vue'
 import DPKCarousel from './DPKCarousel.vue'
+import ChartColorLegend from './ChartColorLegend.vue'
 import axios from 'axios'
 export default {
   name: 'app',
@@ -102,7 +107,8 @@ export default {
     checkAll: CheckAllComponent,
     searchText: SearchTextComponent,
     tagList: TagListComponent,
-    dpkcarousel: DPKCarousel
+    dpkcarousel: DPKCarousel,
+    chartlegend: ChartColorLegend
   },
   data () {
     return {
@@ -126,8 +132,10 @@ export default {
       salesdata: {},
       yeardata: {},
       comparisondata: {},
+      carouselPosition: 0,
       ratings: {},
       updating: false,
+      highestComparison: {},
       compCount: 1,
       starsPath: 'M 11.037 0 l 3.411 6.911 l 7.625 1.108 l -5.518 5.379 l 1.303 7.594 l -6.821 -3.585 l -6.821 3.585 l 1.303 -7.594 L 0 8.019 l 7.626 -1.108 L 11.037 0 Z M 32.088 6.911 l -7.625 1.108 l 5.518 5.379 l -1.302 7.594 l 6.82 -3.585 l 6.821 3.585 l -1.303 -7.594 l 5.518 -5.379 l -7.626 -1.108 L 35.498 0 L 32.088 6.911 Z M 56.55 6.911 l -7.626 1.108 l 5.519 5.379 l -1.303 7.594 l 6.821 -3.585 l 6.82 3.585 l -1.302 -7.594 l 5.518 -5.379 l -7.626 -1.108 L 59.96 0 L 56.55 6.911 Z M 81.012 6.911 l -7.627 1.108 l 5.52 5.379 l -1.304 7.594 l 6.821 -3.585 l 6.82 3.585 l -1.303 -7.594 l 5.518 -5.379 l -7.625 -1.108 L 84.423 0 L 81.012 6.911 Z M 105.474 6.911 l -7.627 1.108 l 5.519 5.379 l -1.302 7.594 l 6.82 -3.585 l 6.821 3.585 l -1.304 -7.594 l 5.52 -5.379 l -7.626 -1.108 L 108.884 0 L 105.474 6.911 Z',
       shouldShowShortcuts: false,
@@ -197,12 +205,22 @@ export default {
           d.yeardata = dta.years
           d.comparisondata = dta.subset
           d.ratings = dta.ratings
-          console.log(d.ratings)
+          let highest = 0
+          console.log(d.comparisondata)
+          for (let k in d.comparisondata) {
+            for (let _k in d.comparisondata[k]) {
+              if (d.comparisondata[k][_k] > highest) {
+                highest = d.comparisondata[k][_k]
+                d.highestComparison = {Total: d.comparisondata[k]}
+              }
+            }
+          }
+          console.log(highest)
           setTimeout(function () {
             d.updating = false
             setTimeout(function () {
               if (Object.keys(d.comparisondata).length > 1) {
-                s.shiftBarChart(0)
+                s.shiftBarChart(d.carouselPosition)
               }
             }, 100)
           }, 10)
@@ -217,14 +235,15 @@ export default {
     },
     shiftBarChart: function (pos) {
       let self = this
-      let wide = document.querySelector('.mobile-bar-chart-container > div').getBoundingClientRect().width
+      self.$data.carouselPosition = pos
+      let wide = document.querySelector('.mobile-sliding-chart-container > div').getBoundingClientRect().width
       let newPos = ((((wide * 0.8) / Object.keys(self.$data.comparisondata).length) * pos) + (wide * 0.075)) * -1
-      let startPos = document.querySelector('.mobile-bar-chart-container > div').style.marginLeft !== undefined ? Number(document.querySelector('.mobile-bar-chart-container > div').style.marginLeft.split('px')[0]) : 0
+      let startPos = document.querySelector('.mobile-sliding-chart-container > div').style.marginLeft !== undefined ? Number(document.querySelector('.mobile-sliding-chart-container > div').style.marginLeft.split('px')[0]) : 0
       let tracker = {x: startPos}
       TweenLite.to(tracker, 0.5, {
         x: newPos,
         onUpdate: function (t) {
-          document.querySelector('.mobile-bar-chart-container > div').style.marginLeft = t.x.toString() + 'px'
+          document.querySelector('.mobile-sliding-chart-container > div').style.marginLeft = t.x.toString() + 'px'
         },
         onUpdateParams: [tracker]
       })
@@ -238,6 +257,7 @@ export default {
     },
     doShortCut: function (e) {
       var self = this
+      self.$data.carouselPosition = 0
       var shortcutKey = e.currentTarget.getAttribute('shortcut')
       console.log(shortcutKey)
       for (var s in self.$data.shortcuts) {
@@ -275,10 +295,15 @@ export default {
       }
     })
     EventBus.$on('search-term-clicked', (n) => {
+      if (document.querySelectorAll('.mobile-search-button-showing-search-ui').length > 0) {
+        document.querySelectorAll('.mobile-search-button-showing-search-ui')[0].click()
+      }
+      self.$data.carouselPosition = 0
       self.addTag({type: n.getAttribute('class'), text: n.innerHTML})
       self.$data.onUpdateSim(self.$data, self)
     })
     EventBus.$on('tag-deleted-clicked', (n) => {
+      self.$data.carouselPosition = 0
       self.$data.selectedTags.splice(Number(n.getAttribute('tag-index')), 1)
       self.$data.onUpdateSim(self.$data, self)
     })
@@ -319,7 +344,7 @@ $drawerClosedHeight: 40px;
 $drawerSpeed:.5s;
 
 #app {
-  font-family: 'Avenir', Helvetica, Arial, sans-serif;
+  font-family: Gotham;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
@@ -376,6 +401,7 @@ div.search-text{
   > ul:not(.check-all){
     position:absolute;
     max-height:300px;
+    max-width:600px;
     overflow:auto;
     width:100%;
     margin:0;
@@ -413,7 +439,7 @@ ul.tag-list{
     border-radius:0px;
     margin:2px;
     color:$textColor;
-    width: 92%;
+    width: 100%;
 
     > span:first-child{
       font-family: Arial;
@@ -496,8 +522,10 @@ ul.tag-list{
 div.pie-chart,
 div.line-chart,
 div.bar-chart{
-  display:inline;
-  float: right;
+  display:inline-block;
+}
+div.pie-chart{
+  margin: 0 auto;
 }
 div.pie-chart{
   width:500px;
@@ -528,6 +556,19 @@ div.charts{
   max-width:1200px;
   width:100%;
   margin:0 auto;
+  h2{
+    height:33px;
+    font-size:24px;
+    text-align: center;
+    padding-top:10px;
+    box-shadow: 0 1px 0 rgba(255,255,255,.7) inset;
+    max-width:500px;
+    margin-left:auto;
+    margin-right:auto;
+  }
+  > h2:first-child{
+    box-shadow: none;
+  }
 }
 
 div.ui-drawer{
@@ -600,7 +641,6 @@ div.ui-drawer:not(.open){
 ul.check-all{
   width:100%;
   height:40px;
-  padding-left:10px;
   > li:first-child{
     border-radius:50px 0 0 50px;
   }
@@ -608,23 +648,27 @@ ul.check-all{
     border-radius:0 50px 50px 0;
   }
   > li:not(:last-child){
-    box-shadow:-9px 0 0 #000000 inset, -10px 0 0 rgba(10,255,241,.4) inset;
+    box-shadow:-1px 0 0 rgba(10,255,241,.4) inset;
   }
   > li{
     float:left;
     margin-top:4px;   
-    width:104px; 
+    width:75px; 
     color:$textColor;
     font-family:Arial;
     font-weight:bold;
     text-align:left;
     padding:5px 0;
-    font-size:12px;
+    font-size:10px;
+    background-position:top center !important;
     input[type='checkbox']{
       display:none;
     }
     > label {
-      padding-left: 28px;
+      /*padding-left: 28px;*/
+      width:75px;
+      text-align: center;
+      margin-top:18px;
     }
   }
 }
@@ -637,13 +681,13 @@ ul.tag-list{
   right: 0;
   overflow-y: auto;
   top: 33px;
-  box-shadow: -1px 0 0 rgba(10,241,255,.3);
+  
   top:392px;
 }
 
 div.rating-charts{
-  width:700px;
-  max-width:100%;
+  width:100%;
+  max-width:600px;
   display: inline-block;
   text-align: left;
   margin-top:12px;
@@ -680,6 +724,7 @@ a.mobile-info-icon{
   display: inline-block;
   width: 40px;
   text-align: center;
+  z-index: 12;
 }
 a.mobile-info-icon::before{
   content:"\2139";
@@ -737,8 +782,8 @@ div.main-header{
 svg.rating-art{
   width: 196px;
   height: 24px;
-  margin-left: 22px;
-  margin-top: 2px;
+  margin-top: 10px;
+  display:block;
   path{
     fill:rgba(255,255,255,.2);
   }
@@ -904,6 +949,7 @@ div#loading_container{
     }
   }
 }
+
 nav.mobile-nav-bar{
   position:fixed;
   text-align: center;
@@ -911,10 +957,11 @@ nav.mobile-nav-bar{
   left:0;
   right:0;
   height: 42px;
-  background-color:rgba(30,30,30,.85);
+  background-color:#333333;
   font-size: 12px;
   font-weight: bold;
   color:#999999;
+  z-index:11;
   + button.mobile-search-button{
     position: fixed;
     left: 5px;
@@ -924,6 +971,7 @@ nav.mobile-nav-bar{
     color: #0afff1;
     background-color: transparent;
     z-index: 21;
+    border:none;
   }
   > span{
     display:block;
@@ -936,6 +984,52 @@ nav.mobile-nav-bar{
 }
 h2{
   color:#ffffff;
+}
+div.dpk-carousel{
+  height: 40px;
+  > a.right-switch, > a.left-switch{
+    top:0 !important;
+    display:inline-block;
+    width: 40px;
+    padding: 6px 0;
+    text-align:center;
+    font-size: 20px;
+    border-radius: 40px;
+    box-shadow: 0 0 0 1px #0afff1 inset;
+    color:#0afff1;
+    text-decoration: none !important;
+    margin:0 9px;
+  }
+  > div.dpk-carousel-marker-container
+  {
+    bottom: 8px !important;
+    > a{
+      background-color: #0afff1 !important;
+    }
+    > a.selected-marker{
+      opacity: .5 !important;
+    }
+  }
+}
+ul.chart-legend{
+  position:absolute !important;
+  width:300px;
+  left: 50% !important;
+  margin-left: -150px !important;
+  z-index: 10;
+  top:50px;
+  > li{
+    > span:first-child{
+      width:8px !important;
+      
+
+    }
+    > span:last-child{
+      color: #ffffff;
+      font-size: 10px !important; 
+      margin-left: 10px !important;
+    }
+  }
 }
 @media screen and (min-width: 1200px) {
   .mobile-bar-chart-container{
@@ -959,6 +1053,7 @@ h2{
     > ul:not(.check-all){
       background-color: transparent;
       width: 60%;
+      max-width:auto;
     }
     > input[type="text"]{
       position: relative;
@@ -996,11 +1091,71 @@ h2{
     visibility:visible;
   }
   ul.tag-list{
+    box-shadow: -1px 0 0 rgba(10,241,255,.3);
     min-height: 340px;
     top:33px;
+    > li{
+      width:92%;
+    }
   }
   div.rating-charts{
     height:374px;
+    width:700px;
+    max-width:100%;
+  }
+  .mobile-show{
+    display:none;
+  }
+  .mobile-bar-chart-container.measurement-chart-container{
+    display:none;
+  }
+  div.pie-chart,
+  div.line-chart,
+  div.bar-chart{
+    display:inline;
+    float: right;
+  }
+  div.charts{
+    h2{
+      padding-top:0;
+      box-shadow: none;
+      max-width: auto;
+    }
+  }
+  svg.rating-art{
+    margin-left:22px;
+    margin-top:2px;
+    display:inline;
+  }
+  ul.check-all{
+    padding-left:10px;
+    > li{
+      width:104px;
+      background-position: top left !important;
+      font-size:12px;
+      > label{
+        width: auto;
+        padding-left:24px;
+        text-align: left;
+        margin-top:0;
+      }
+    }
+    > li:not(:last-child){
+      box-shadow:-9px 0 0 #000000 inset, -10px 0 0 rgba(10,255,241,.4) inset;
+    }
+  }
+}
+.mobile-bar-chart-container.measurement-chart-container{
+  width: 44px !important;
+  overflow:hidden !important;
+  position:absolute;
+  box-shadow: 18px 0 10px #000000 inset;
+  top: 40px !important;
+  > .bar-chart{
+    width:1200px !important;
+    max-width:1200px !important;
+    min-width:1200px !important;
+    margin-left:-74px !important;
   }
 }
 </style>
