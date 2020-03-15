@@ -43,12 +43,6 @@
               }
             },
             color: this.colors,
-            tooltip: {
-              trigger: 'axis',
-              axisPointer: {
-                type: 'shadow'
-              }
-            },
             // legend: {
             //   data: _legendData,
             //   textStyle: {
