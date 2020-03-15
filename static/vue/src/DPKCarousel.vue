@@ -22,13 +22,18 @@ export default{
   components: {
     'dpk-swiper': DPKSwiper
   },
-  props: ['items', 'height', 'contentwidth', 'autoplay'],
+  props: ['items', 'height', 'contentwidth', 'autoplay', 'index'],
   data () {
     return {
-      position: 0,
+      position: this.index,
       carouselHeight: this.height ? this.height.toString() + 'px' : '100%',
       cWidth: this.contentwidth ? this.contentwidth : 107,
       automaticallyPlay: this.autoplay
+    }
+  },
+  watch: {
+    index: function () {
+      this.$data.position = this.index
     }
   },
   methods: {

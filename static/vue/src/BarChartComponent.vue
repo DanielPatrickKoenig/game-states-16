@@ -49,12 +49,12 @@
                 type: 'shadow'
               }
             },
-            legend: {
-              data: _legendData,
-              textStyle: {
-                color: this.textcolor
-              }
-            },
+            // legend: {
+            //   data: _legendData,
+            //   textStyle: {
+            //     color: this.textcolor
+            //   }
+            // },
             textStyle: {
               color: this.textcolor
             },
@@ -80,6 +80,7 @@
             series: _series
           }
           self.$data.chartObject.setOption(option)
+          console.log(self.$data.chartObject)
         }
       }
     },

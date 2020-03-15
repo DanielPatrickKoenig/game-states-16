@@ -25,6 +25,14 @@
     <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
     <link rel="apple-touch-icon" href="{{=URL('static','images/favicon.png')}}">
     <style>
+      @font-face{
+        font-family:"Gotham";
+        src:url("/{{=request.application}}/static/src/vue/assets/fonts/GothamBook.otf");
+      }
+      @font-face{
+        font-family:"Gothambold";
+        src:url("/{{=request.application}}/static/src/vue/assets/fonts/GothamBold.otf");
+      }
       @font-face {
         font-family: "gameing-simulator";  
         src:  url("/{{=request.application}}/static/src/vue/assets/fonts/gameing-simulator.eot?qhfh8m");  
