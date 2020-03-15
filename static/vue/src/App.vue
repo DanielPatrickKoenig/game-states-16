@@ -235,9 +235,10 @@ export default {
     },
     shiftBarChart: function (pos) {
       let self = this
+      let leftOffset = 10
       self.$data.carouselPosition = pos
       let wide = document.querySelector('.mobile-sliding-chart-container > div').getBoundingClientRect().width
-      let newPos = ((((wide * 0.8) / Object.keys(self.$data.comparisondata).length) * pos) + (wide * 0.075)) * -1
+      let newPos = ((((wide * 0.8) / Object.keys(self.$data.comparisondata).length) * pos) + (wide * 0.075) - leftOffset) * -1
       let startPos = document.querySelector('.mobile-sliding-chart-container > div').style.marginLeft !== undefined ? Number(document.querySelector('.mobile-sliding-chart-container > div').style.marginLeft.split('px')[0]) : 0
       let tracker = {x: startPos}
       TweenLite.to(tracker, 0.5, {
@@ -409,13 +410,14 @@ div.search-text{
     background-color:rgba(0,0,0,.85);
     > li{
       color:$textColor;
-      padding:4px;
+      padding:15px 4px;
       margin:2px 0;
       font-family:Arial;
       font-weight:bold;
       font-size:12px;
       text-align: left;
       padding-left:25px;
+      background-position: 1px 11px !important;
     }
   }
 }
@@ -457,9 +459,10 @@ ul.tag-list{
       background-color: transparent;
       color: #ff0000;
       border-radius: 20px;
-      width: 15px;
-      height: 16px;
-      font-size: 10px !important;
+      width: 40px;
+      height: 40px;
+      font-size: 26px !important;
+      opacity: .8;
       margin-right: -4px;
       margin-top: -1px !important;
       text-align:center;
@@ -674,7 +677,7 @@ ul.check-all{
 }
 
 ul.tag-list{
-  max-height: 340px;
+  
   position: absolute;
   width: 100%;
   z-index: 100;
@@ -1042,6 +1045,18 @@ ul.chart-legend{
   }
   ul.tag-list{
     width: 245px;
+    max-height: 340px;
+    > li:first-child{
+      display:none;
+    }
+    > li{
+      > span:not(:first-child){
+        width: 15px;
+        height: 16px;
+        font-size: 10px !important;
+        opacity: 1;
+      }
+    }
   }
   div.pie-chart{
     height: 400px;
@@ -1054,6 +1069,11 @@ ul.chart-legend{
       background-color: transparent;
       width: 60%;
       max-width:auto;
+      > li{
+        padding: 4px;
+        background-position: 1px 1px !important;
+        padding-left:25px;
+      }
     }
     > input[type="text"]{
       position: relative;
