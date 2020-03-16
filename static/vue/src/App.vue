@@ -218,6 +218,7 @@ export default {
             }
           }
           console.log(highest)
+          s.updateCarouselPosition(d, s)
           setTimeout(function () {
             d.updating = false
             setTimeout(function () {
@@ -232,6 +233,16 @@ export default {
     }
   },
   methods: {
+    updateCarouselPosition: function (d, s) {
+      setTimeout(function () {
+        d.updating = false
+        setTimeout(function () {
+          if (Object.keys(d.comparisondata).length > 1) {
+            s.shiftBarChart(d.carouselPosition)
+          }
+        }, 100)
+      }, 10)
+    },
     onBarShift: function (e) {
       let self = this
       self.shiftBarChart(e.position)
@@ -328,6 +339,7 @@ export default {
           self.$data.resizing = true
           setTimeout(function () {
             self.$data.resizing = false
+            self.updateCarouselPosition(self.$data, self)
           }, 100)
           // self.$data.onUpdateSim(self.$data, self)
         }
