@@ -77,8 +77,11 @@
     }}
     <style>
       body{
-        background-image:url('/gamerstats1/static/images/bgImage.png');
+        background-image:url('/{{=request.application}}/static/images/bgImage.png');
         background-color:#000000;
+      }
+      div#loading_container{
+        background-image:url('/{{=request.application}}/static/images/dotloader.gif');
       }
     </style>
   </head>

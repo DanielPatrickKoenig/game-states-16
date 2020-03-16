@@ -7,7 +7,7 @@
         <a></a>
       </label>
     </div>
-    <div class="charts">
+    <div v-if="!resizing && !initailLoading" class="charts">
       <!-- <barChart :chartdata="comparisondata" :colors="chartColors" :textcolor="chartTextColor" title="Regional Sales"></barChart> -->
       <h2>Regional Sales</h2>
       <chartlegend v-if="Object.keys(comparisondata).length >= 0" :colors="chartColors" :labels="Object.keys(comparisondata[Object.keys(comparisondata)[0]])" :horizontal="true"></chartlegend>
@@ -140,6 +140,7 @@ export default {
       starsPath: 'M 11.037 0 l 3.411 6.911 l 7.625 1.108 l -5.518 5.379 l 1.303 7.594 l -6.821 -3.585 l -6.821 3.585 l 1.303 -7.594 L 0 8.019 l 7.626 -1.108 L 11.037 0 Z M 32.088 6.911 l -7.625 1.108 l 5.518 5.379 l -1.302 7.594 l 6.82 -3.585 l 6.821 3.585 l -1.303 -7.594 l 5.518 -5.379 l -7.626 -1.108 L 35.498 0 L 32.088 6.911 Z M 56.55 6.911 l -7.626 1.108 l 5.519 5.379 l -1.303 7.594 l 6.821 -3.585 l 6.82 3.585 l -1.302 -7.594 l 5.518 -5.379 l -7.626 -1.108 L 59.96 0 L 56.55 6.911 Z M 81.012 6.911 l -7.627 1.108 l 5.52 5.379 l -1.304 7.594 l 6.821 -3.585 l 6.82 3.585 l -1.303 -7.594 l 5.518 -5.379 l -7.625 -1.108 L 84.423 0 L 81.012 6.911 Z M 105.474 6.911 l -7.627 1.108 l 5.519 5.379 l -1.302 7.594 l 6.82 -3.585 l 6.821 3.585 l -1.304 -7.594 l 5.52 -5.379 l -7.626 -1.108 L 108.884 0 L 105.474 6.911 Z',
       shouldShowShortcuts: false,
       currentWidth: 0,
+      resizing: false,
       shortcuts: {
         NONE: {
           label: 'Everything',
@@ -185,6 +186,7 @@ export default {
       onUpdateSim: function (d, s) {
         var splitter = ':::'
         var _params = {}
+        d.initailLoading = true
         d.updating = true
         d.compCount = 0
         for (var i = 0; i < d.selectedTags.length; i++) {
@@ -224,6 +226,7 @@ export default {
               }
             }, 100)
           }, 10)
+          d.initailLoading = false
         })
       }
     }
@@ -322,7 +325,11 @@ export default {
       self.$data.onUpdateSim(self.$data, self)
       window.addEventListener('resize', function () {
         if (self.$data.currentWidth !== window.innerWidth) {
-          self.$data.onUpdateSim(self.$data, self)
+          self.$data.resizing = true
+          setTimeout(function () {
+            self.$data.resizing = false
+          }, 100)
+          // self.$data.onUpdateSim(self.$data, self)
         }
         self.$data.currentWidth = window.innerWidth
       })
@@ -887,7 +894,7 @@ div#information_container{
   z-index: 200;
   > div{
     width:600px;
-    max-width: 100%;
+    max-width: 90%;
     padding:15px;
     margin: 60px auto 0 auto;
     background-color: #333333;
@@ -924,7 +931,6 @@ div#loading_container{
   height:100%;
   background-color:rgba(0,0,0,1);
   z-index: 201;
-  background-image:url('/gamerstats1/static/images/dotloader.gif');
   background-repeat:no-repeat;
   background-position: center;
   opacity: .5;
