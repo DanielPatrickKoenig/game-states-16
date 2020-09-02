@@ -12,7 +12,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "bootstrap": "^4.1.1",
-    "bootstrap-vue": "^2.0.0-rc.9",
+    "bootstrap-vue": "^2.0.0-rc.12",
     "echarts": "^4.1.0",
     "gsap": "^3.2.4",
     "promise-polyfill": "^7.1.2",
